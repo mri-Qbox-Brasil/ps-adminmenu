@@ -20,7 +20,7 @@ RegisterNetEvent('ps-adminmenu:client:TeleportToCoords', function(data, selected
     if not data or not CheckPerms(data.perms) then return end
 
     local coordsData = selectedData["Coordenadas"]
-    if not coordsData or not coordsData.value then return end
+    if not coordsData or not coordsData['value'] then return end
 
     local coordsStr = tostring(coordsData.value)
     local x, y, z, heading
