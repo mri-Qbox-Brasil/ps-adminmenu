@@ -19,26 +19,25 @@ RegisterNetEvent('ps-adminmenu:client:TeleportToCoords', function(data, selected
     local data = CheckDataFromKey(data)
     if not data or not CheckPerms(data.perms) then return end
 
-    local coordsStr = selectedData["Coords"].value
+    local coordsData = selectedData["Coordenadas"]
+    if not coordsData or not coordsData.value then return end
+
+    local coordsStr = tostring(coordsData.value)
     local x, y, z, heading
 
-    x, y, z, heading = coordsStr:match("(-?%d+%.?%d*),%s*(-?%d+%.?%d*),?%s*(-?%d*%.?%d*),?%s*(-?%d*%.?%d*)")
+    local matches = { coordsStr:match("^%s*(-?[%d%.]+),%s*(-?[%d%.]+),%s*(-?[%d%.]+),?%s*(-?[%d%.]*)%s*$") }
 
-    if not x or not y then
-        x, y, z, heading = coordsStr:match("(-?%d+%.?%d*)%s+(-?%d+%.?%d*)%s*(-?%d*%.?%d*)%s*(-?%d*%.?%d*)")
+    if matches and #matches >= 3 then
+        x, y, z, heading = tonumber(matches[1]), tonumber(matches[2]), tonumber(matches[3]), tonumber(matches[4] or 0)
     end
 
-    x = tonumber(x)
-    y = tonumber(y)
-    z = tonumber(z or 0)
-    heading = tonumber(heading or 0)
+    if not x or not y or not z then return end
 
-    if x and y then
-        lastCoords = GetEntityCoords(cache.ped)
-        if heading and heading ~= 0 then
-            SetEntityHeading(cache.ped, heading)
-        end
-        SetPedCoordsKeepVehicle(cache.ped, x, y, z)
+    lastCoords = GetEntityCoords(cache.ped)
+    SetPedCoordsKeepVehicle(cache.ped, x, y, z)
+
+    if heading and heading ~= 0 then
+        SetEntityHeading(cache.ped, heading)
     end
 end)
 
