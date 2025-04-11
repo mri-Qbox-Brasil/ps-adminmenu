@@ -33,7 +33,7 @@ lib.callback.register(
             totalCash = totalCash,
             totalBank = totalBank,
             totalCrypto = totalCrypto,
-            uniquePlayers = players[0].a or 0,
+            uniquePlayers = players[1].qtd or 0,
             vehicleCount = vehicleCount,
             bansCount = bansCount,
             characterCount = characterCount
