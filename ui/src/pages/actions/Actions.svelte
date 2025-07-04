@@ -1,13 +1,34 @@
 <script lang="ts">
 	import { MENU_WIDE, searchActions } from '@store/stores'
+	import { PLAYER, PLAYER_VEHICLES, SELECTED_PLAYER } from '@store/players';
 	import { ACTION, ALL_ACTIONS } from '@store/actions'
-
+	import { onMount } from 'svelte';
+	import { SendNUI } from '@utils/SendNUI';
 	import Header from '@components/Header.svelte'
 	import Tabs from './components/Tabs.svelte'
 	import Button from './components/Button.svelte'
 	import Dropdown from './components/Dropdown.svelte'
 	import ButtonState from '@pages/Server/components/ButtonState.svelte'
 
+	let loading = false;
+	let playersOnline = [];
+	let playersOffline = [];
+
+	onMount(async () => {
+		try {
+			loading = true;
+			const players = await SendNUI('getPlayers');
+			if (players) {
+				playersOnline = players.filter((player) => player.online);
+				playersOffline = players.filter((player) => !player.online);
+				PLAYER.set(players);
+			}
+		} catch (error) {
+			console.error('Erro ao carregar jogadores:', error);
+		} finally {
+			loading = false;
+		}
+	});
 </script>
 
 <div class="h-full w-[99vh] px-[2vh]">
