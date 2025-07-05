@@ -28,6 +28,16 @@ RegisterNetEvent('ps-adminmenu:client:PlaySound', function(data, selectedData)
     TriggerServerEvent("InteractSound_SV:PlayOnOne", player, sound, 0.30)
 end)
 
+-- Play SoundFrontEnd
+RegisterNetEvent('ps-adminmenu:client:PlayHUDSound', function(type)
+    if type == 'success' then
+        PlaySoundFrontend(-1, 'OK', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+    elseif type == 'error' then
+        PlaySoundFrontend(-1, 'ERROR', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+    end
+end)
+
+
 -- Drunk Player
 RegisterNetEvent('ps-adminmenu:client:InitiateDrunkEffect', function()
     local playerPed = cache.ped

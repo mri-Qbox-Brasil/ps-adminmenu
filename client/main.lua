@@ -71,6 +71,7 @@ RegisterNUICallback("clickButton", function(data)
             " (" ..
             PlayerData.citizenid ..
             ") - Used: " .. key .. (selectedData and (" with args: " .. json.encode(selectedData)) or ""))
+	TriggerEvent('ps-adminmenu:client:PlayHUDSound', 'success')
 end)
 
 -- Open UI Event

@@ -3,6 +3,38 @@
     import Spinner from '@components/Spinner.svelte';
     import { onMount } from 'svelte';
     import { SendNUI } from '@utils/SendNUI';
+    import { get } from 'svelte/store';
+    import { BROWSER_MODE } from '@store/stores';
+
+    // Seus mocks diretos
+    const mockPlayers = [
+        {
+            id: "1",
+            name: "John Doe",
+            cid: "ERP95808",
+            cash: 2000,
+            bank: 50000,
+            crypto: 120,
+        },
+        {
+            id: "2",
+            name: "Jane Smith",
+            cid: "ERP87521",
+            cash: 1500,
+            bank: 30000,
+            crypto: 70,
+        }
+    ];
+
+    const mockSummary = {
+        totalCash: 15000,
+        totalBank: 200000,
+        totalCrypto: 1000,
+        uniquePlayers: 42,
+        vehicleCount: 140,
+        bansCount: 5,
+        characterCount: 70,
+    };
 
     let loading = true;
     let errorMessage = '';
@@ -22,30 +54,38 @@
     let sortOrder = 'desc';
 
     async function fetchDashboardData() {
+        const browserMode = get(BROWSER_MODE);
+
         try {
             loading = true;
 
-            const serverInfo = await SendNUI('getServerInfo');
-            if (serverInfo) {
-                summary = {
-                    totalCash: serverInfo.totalCash || 0,
-                    totalBank: serverInfo.totalBank || 0,
-                    totalCrypto: serverInfo.totalCrypto || 0,
-                    uniquePlayers: serverInfo.uniquePlayers || 0,
-                    vehicleCount: serverInfo.vehicleCount || 0,
-                    bansCount: serverInfo.bansCount || 0,
-                    characterCount: serverInfo.characterCount || 0,
-                };
-            } else {
-                throw new Error('Dados inválidos do servidor');
-            }
-
-            const fetchedPlayers = await SendNUI('getPlayers');
-            if (fetchedPlayers && Array.isArray(fetchedPlayers)) {
-                players = fetchedPlayers;
+            if (browserMode) {
+                players = mockPlayers;
+                summary = mockSummary;
                 sortPlayers();
             } else {
-                throw new Error('Dados inválidos de jogadores');
+                const serverInfo = await SendNUI('getServerInfo');
+                if (serverInfo) {
+                    summary = {
+                        totalCash: serverInfo.totalCash || 0,
+                        totalBank: serverInfo.totalBank || 0,
+                        totalCrypto: serverInfo.totalCrypto || 0,
+                        uniquePlayers: serverInfo.uniquePlayers || 0,
+                        vehicleCount: serverInfo.vehicleCount || 0,
+                        bansCount: serverInfo.bansCount || 0,
+                        characterCount: serverInfo.characterCount || 0,
+                    };
+                } else {
+                    throw new Error('Dados inválidos do servidor');
+                }
+
+                const fetchedPlayers = await SendNUI('getPlayers');
+                if (fetchedPlayers && Array.isArray(fetchedPlayers)) {
+                    players = fetchedPlayers;
+                    sortPlayers();
+                } else {
+                    throw new Error('Dados inválidos de jogadores');
+                }
             }
         } catch (error) {
             errorMessage = error.message || 'Erro ao carregar dados';

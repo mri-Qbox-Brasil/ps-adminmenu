@@ -83,23 +83,23 @@ end
 -- Toggles the behavior of visiblty, collision, etc
 local function ToggleBehavior(bool)
     local coords = GetEntityCoords(ped)
-
+    local alpha = bool and 0 or 255
     RequestCollisionAtCoord(coords.x, coords.y, coords.z)
     FreezeEntityPosition(ped, bool)
     SetEntityCollision(ped, not bool, not bool)
     SetEntityVisible(ped, not bool, not bool)
-    SetEntityInvincible(ped, bool)
-    SetEntityAlpha(ped, bool and noclipAlpha or 255, false)
+    SetEntityAlpha(ped, alpha, false)
+    ResetEntityAlpha(ped)
     SetLocalPlayerVisibleLocally(true)
     SetEveryoneIgnorePlayer(ped, bool)
     SetPoliceIgnorePlayer(ped, bool)
 
     local vehicle = GetVehiclePedIsIn(ped, false)
     if vehicle ~= 0 then
-        SetEntityAlpha(vehicle, bool and noclipAlpha or 255, false)
+        SetEntityAlpha(vehicle, alpha, false)
+        ResetEntityAlpha(vehicle)
     end
 end
-
 
 -- Stops the noclip
 local function StopNoclip()

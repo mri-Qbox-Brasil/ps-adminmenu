@@ -62,6 +62,7 @@ local function getPlayers()
             crypto = playerData.money.crypto,
             phone = playerData.charinfo.phone,
             vehicles = vehicles,
+            metadata = playerData.metadata,
             online = true
         }
     end
@@ -128,6 +129,7 @@ local function getPlayers()
                 bank = moneyinfo.bank or 0,
                 phone = charinfo.phone or "Desconhecido",
                 vehicles = vehicles,
+                metadata = player.metadata,
                 online = false
             }
         end

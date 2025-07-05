@@ -17,6 +17,10 @@ interface PLAYER_DATA {
     steam?: string;
     fivem?: string;
     vehicles?: PLAYER_VEHICLES[];
+    metadata?: {
+        verified?: boolean;
+		[key: string]: any;
+	};
 }
 
 interface PLAYER_VEHICLES {

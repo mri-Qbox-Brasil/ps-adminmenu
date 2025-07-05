@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { MENU_WIDE, searchActions } from '@store/stores'
+	import { get } from 'svelte/store';
+	import { MENU_WIDE, searchActions, BROWSER_MODE } from '@store/stores'
 	import { PLAYER, PLAYER_VEHICLES, SELECTED_PLAYER } from '@store/players';
 	import { ACTION, ALL_ACTIONS } from '@store/actions'
 	import { onMount } from 'svelte';
@@ -15,18 +16,39 @@
 	let playersOffline = [];
 
 	onMount(async () => {
-		try {
-			loading = true;
-			const players = await SendNUI('getPlayers');
-			if (players) {
-				playersOnline = players.filter((player) => player.online);
-				playersOffline = players.filter((player) => !player.online);
-				PLAYER.set(players);
+		const browserMode = get(BROWSER_MODE);
+
+		if (browserMode) {
+			// Só em modo browser: escuta mock do debugData
+			window.addEventListener('message', (event) => {
+				if (!event.data?.action) return;
+
+				switch (event.data.action) {
+					case 'setPlayersData':
+						playersOnline = event.data.data.filter((p) => p.online);
+						playersOffline = event.data.data.filter((p) => !p.online);
+						PLAYER.set(event.data.data);
+						break;
+					case 'setActionData':
+						ACTION.set(event.data.data);
+						break;
+				}
+			});
+		} else {
+			// Ambiente normal no jogo (FiveM)
+			try {
+				loading = true;
+				const players = await SendNUI('getPlayers');
+				if (players) {
+					playersOnline = players.filter((player) => player.online);
+					playersOffline = players.filter((player) => !player.online);
+					PLAYER.set(players);
+				}
+			} catch (error) {
+				console.error('Erro ao carregar jogadores:', error);
+			} finally {
+				loading = false;
 			}
-		} catch (error) {
-			console.error('Erro ao carregar jogadores:', error);
-		} finally {
-			loading = false;
 		}
 	});
 </script>

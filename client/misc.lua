@@ -26,6 +26,15 @@ RegisterNetEvent('ps-adminmenu:client:ToggleGodmode', function(data)
     end
 end)
 
+-- Kill Player
+RegisterNetEvent('ps-adminmenu:client:KillPlayer', function(data, selectedData)
+    local data = CheckDataFromKey(data)
+    if not data or not CheckPerms(data.perms) then return end
+    local player = selectedData["Player"].value
+    SetEntityHealth(cache.ped, 0)
+    QBCore.Functions.Notify(locale("kill_player", player), 'success')
+end)
+
 -- Cuff/Uncuff
 RegisterNetEvent('ps-adminmenu:client:ToggleCuffs', function(player)
     local target = GetPlayerServerId(player)

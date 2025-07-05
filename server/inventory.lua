@@ -1,18 +1,14 @@
 -- Clear Inventory
 RegisterNetEvent('ps-adminmenu:server:ClearInventory', function(data, selectedData)
     local data = CheckDataFromKey(data)
-    if not data or not CheckPerms(data.perms) then return end
+    if not data or not CheckPerms(source, data.perms) then return end
 
     local src = source
-    local player = selectedData["Player"].value
+    local player = tonumber(selectedData["Player"].value)
     local Player = QBCore.Functions.GetPlayer(player)
 
     if not Player then
         return QBCore.Functions.Notify(source, locale("not_online"), 'error', 7500)
-    end
-
-    if player == src then
-        return QBCore.Functions.Notify(source, locale("no_self"), 'error', 7500)
     end
 
     if Config.Inventory == 'ox_inventory' then
@@ -60,7 +56,12 @@ end)
 
 -- Open Inv [ox side]
 RegisterNetEvent('ps-adminmenu:server:OpenInv', function(data)
-    exports.ox_inventory:forceOpenInventory(source, 'player', data)
+    local targetPlayer = tonumber(data) or 0
+
+    if source == targetPlayer then
+        return TriggerClientEvent("QBCore:Notify", source, locale("no_self"), "error", 7500)
+    end
+    exports.ox_inventory:forceOpenInventory(source, 'player', targetPlayer)
 end)
 
 -- Open Stash [ox side]

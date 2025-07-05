@@ -43,6 +43,10 @@
 		$PLAYER = data
 	})
 
+	ReceiveNUI('setServerInfo', (data: any) => {
+		$SERVER = data
+	})
+
 	ReceiveNUI('data', (data: any) => {
 		$VEHICLE_DATA = data.vehicles
 		$ITEM_DATA = data.items

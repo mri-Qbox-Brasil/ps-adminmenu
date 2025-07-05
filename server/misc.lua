@@ -5,9 +5,9 @@ RegisterNetEvent('ps-adminmenu:server:BanPlayer', function(data, selectedData)
 
     local player = selectedData["Player"].value
     local reason = selectedData["Reason"].value or ""
-    local time = selectedData["Duration"].value
+    local time = tonumber(selectedData["Duração"].value)
 
-    local banTime = tonumber(os.time() + time)
+    local banTime = time == 2147483647 and 2147483647 or tonumber(os.time() + time)
     local timeTable = os.date('*t', banTime)
 
     MySQL.insert('INSERT INTO bans (name, license, discord, ip, reason, expire, bannedby) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -31,6 +31,48 @@ RegisterNetEvent('ps-adminmenu:server:BanPlayer', function(data, selectedData)
     QBCore.Functions.Notify(source, locale("playerbanned", player, banTime, reason), 'success', 7500)
 end)
 
+-- Unban Player
+RegisterNetEvent('ps-adminmenu:server:UnbanPlayer', function(data, selectedData)
+    local actionData = CheckDataFromKey(data)
+    local src = source or 0
+
+    if not actionData then
+        return
+    end
+
+    if not CheckPerms(src, actionData.perms) then
+        return
+    end
+
+    local targetId = tonumber(selectedData["Player"] and selectedData["Player"].value)
+    if not targetId then
+        return
+    end
+
+    local license = QBCore.Functions.GetIdentifier(targetId, 'license')
+
+    if not license then
+        if src > 0 then
+            QBCore.Functions.Notify(src, 'License do jogador não encontrada.', 'error', 7500)
+        end
+        return
+    end
+
+    local result = MySQL.query.await('SELECT * FROM bans WHERE license = ?', { license })
+
+    if result and #result > 0 then
+        local deleteResult = MySQL.update.await('DELETE FROM bans WHERE license = ?', { license })
+
+        if src > 0 then
+            QBCore.Functions.Notify(src, 'Jogador desbanido com sucesso.', 'success', 7500)
+        end
+    else
+        if src > 0 then
+            QBCore.Functions.Notify(src, 'Nenhum ban ativo encontrado para esse jogador.', 'error', 7500)
+        end
+    end
+end)
+
 -- Warn Player
 RegisterNetEvent('ps-adminmenu:server:WarnPlayer', function(data, selectedData)
     local data = CheckDataFromKey(data)
@@ -42,14 +84,14 @@ RegisterNetEvent('ps-adminmenu:server:WarnPlayer', function(data, selectedData)
     local warnId = 'WARN-' .. math.random(1111, 9999)
     if target ~= nil then
         QBCore.Functions.Notify(target.PlayerData.source,
-            locale("warned") .. ", por: " .. locale("reason") .. ": " .. reason, 'inform', 60000)
+            locale("warned") .. ", por: " .. locale("reason") .. " " .. reason, 'inform', 60000)
         QBCore.Functions.Notify(source,
-            locale("warngiven") .. GetPlayerName(target.PlayerData.source) .. ", for: " .. reason)
+            locale("warngiven") .. GetPlayerName(target.PlayerData.source) .. ", por: " .. reason)
         MySQL.insert('INSERT INTO player_warns (senderIdentifier, targetIdentifier, reason, warnId) VALUES (?, ?, ?, ?)',
             {
                 sender.PlayerData.license,
                 target.PlayerData.license,
-                reason,
+                reason, 
                 warnId
             })
     else
@@ -70,6 +112,26 @@ RegisterNetEvent('ps-adminmenu:server:KickPlayer', function(data, selectedData)
     end
 
     DropPlayer(target.PlayerData.source, locale("kicked") .. '\n' .. locale("reason") .. reason)
+end)
+
+-- Verify Player
+RegisterNetEvent('ps-adminmenu:server:verifyPlayer', function(data, selectedData)
+	local data = CheckDataFromKey(data)
+	if not data or not CheckPerms(source, data.perms) then return end
+
+	local playerId = tonumber(selectedData["Player"].value)
+	local Player = QBCore.Functions.GetPlayer(playerId)
+
+	if Player then
+		local metadata = Player.PlayerData.metadata or {}
+		local currentState = metadata.verified or false
+
+		local newState = not currentState
+		Player.Functions.SetMetaData("verified", newState)
+
+		local message = newState and "Jogador marcado como verificado." or "Verificação removida do jogador."
+		TriggerClientEvent('QBCore:Notify', source, message, newState and "success" or "error")
+	end
 end)
 
 -- Revive Player
@@ -239,7 +301,19 @@ RegisterNetEvent('ps-adminmenu:server:CuffPlayer', function(data, selectedData)
     local data = CheckDataFromKey(data)
     if not data or not CheckPerms(source, data.perms) then return end
 
-    local target = selectedData["Player"].value
+    local target = tonumber(selectedData["Player"].value)
+
+    if GetResourceState("ND_Police") == "started" then
+        local playerIsCuffed = Player(target).state.isCuffed
+        local playerCuffType = Player(target).state.cuffType or "cuffs"
+
+        if playerIsCuffed then
+            TriggerClientEvent("ND_Police:uncuffPed", target)
+            return QBCore.Functions.Notify(source, locale("toggled_cuffs_off"), 'success')
+        end
+        TriggerClientEvent("ND_Police:syncNormalCuff", target, "front", "cuffs")
+        return QBCore.Functions.Notify(source, locale("toggled_cuffs_on"), 'success')
+    end
 
     TriggerClientEvent('ps-adminmenu:client:ToggleCuffs', target)
     QBCore.Functions.Notify(source, locale("toggled_cuffs"), 'success')

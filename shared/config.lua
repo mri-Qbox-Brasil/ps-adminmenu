@@ -185,6 +185,15 @@ Config.Actions = {
             { label = "Confirmar", option = "button",   type = "server", event = "ps-adminmenu:server:FreezePlayer" },
         },
     },
+    
+    ["kill_player"] = {
+        label = "Matar Jogador",
+        perms = "mod",
+        dropdown = {
+            { label = "Player",  option = "dropdown", data = "players" },
+            { label = "Confirmar", option = "button",   type = "client", event = "ps-adminmenu:client:KillPlayer" },
+        },
+    },
 
     ["drunk_player"] = {
         label = "Deixar Jogador Bêbado",
@@ -478,7 +487,7 @@ Config.Actions = {
         dropdown = {
             { label = "Amount",  option = "text" },
             {
-                label = "Tipo",
+                label = "Type",
                 option = "dropdown",
                 data = {
                     { label = "Dinheiro",   value = "cash" },
@@ -497,7 +506,7 @@ Config.Actions = {
             { label = "Player", option = "dropdown", data = "players" },
             { label = "Amount", option = "text" },
             {
-                label = "Tipo",
+                label = "Type",
                 option = "dropdown",
                 data = {
                     { label = "Dinheiro", value = "cash" },
@@ -692,24 +701,61 @@ Config.Actions = {
             { label = "Tocar Som", option = "button",   type = "client", event = "ps-adminmenu:client:PlaySound" },
         },
     },
+
+    ["unbanPlayer"] = {
+        label = "Desbanir Jogador",
+        event = "ps-adminmenu:server:UnbanPlayer",
+        perms = "mod",
+        type = "server"
+    }
 }
 
 Config.PlayerActions = {
     ["teleportToPlayer"] = {
-        label = "Teleportar para Jogador",
+        label = "Teleportar",
         type = "server",
         event = "ps-adminmenu:server:TeleportToPlayer",
         perms = "mod",
     },
     ["bringPlayer"] = {
-        label = "Puxar Jogador",
+        label = "Puxar",
         type = "server",
         event = "ps-adminmenu:server:BringPlayer",
         perms = "mod",
     },
+    ["sendPlayerBack"] = {
+        label = "Enviar de Volta",
+        type = "server",
+        event = "ps-adminmenu:server:SendPlayerBack",
+        perms = "mod",
+    },
     ["revivePlayer"] = {
-        label = "Reviver Jogador",
+        label = "Reviver",
         event = "ps-adminmenu:server:Revive",
+        perms = "mod",
+        type = "server"
+    },
+    ["verifyPlayer"] = {
+        label = "Verificar Jogador",
+        event = "ps-adminmenu:server:verifyPlayer",
+        perms = "mod",
+        type = "server"
+    },
+    ["givePlayerMoney"] = {
+        label = "Dar Dinheiro",
+        event = "ps-adminmenu:server:givePlayerMoney",
+        perms = "mod",
+        type = "server"
+    },
+    ["removePlayerMoney"] = {
+        label = "Remover Dinheiro",
+        event = "ps-adminmenu:server:removePlayerMoney",
+        perms = "mod",
+        type = "server"
+    },
+    ["clothesMenu"] = {
+        label = "Remover Dinheiro",
+        event = "ps-adminmenu:server:clothesMenu",
         perms = "mod",
         type = "server"
     },
@@ -730,7 +776,7 @@ Config.PlayerActions = {
         event = "ps-adminmenu:server:KickPlayer",
         perms = "mod",
         type = "server"
-    }
+    },
 }
 
 Config.OtherActions = {

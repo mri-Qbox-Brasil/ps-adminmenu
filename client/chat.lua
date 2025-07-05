@@ -15,7 +15,6 @@ end)
 
 RegisterNUICallback("SendMessage", function(msgData, cb)
 	local message = msgData.message
-	print(message, PlayerData.citizenid, PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname )
 
 	TriggerServerEvent("ps-adminmenu:server:sendMessageServer", message, PlayerData.citizenid, PlayerData.charinfo.firstname .. " " .. PlayerData.charinfo.lastname)
 

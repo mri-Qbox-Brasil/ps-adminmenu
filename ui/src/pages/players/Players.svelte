@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { MENU_WIDE } from '@store/stores';
+	import { get } from 'svelte/store';
+	import { MENU_WIDE, BROWSER_MODE } from '@store/stores';
 	import { PLAYER, PLAYER_VEHICLES, SELECTED_PLAYER } from '@store/players';
 	import Header from '@components/Header.svelte';
 	import Button from './components/Button.svelte';
@@ -9,6 +10,34 @@
 	import Autofill from '@components/Autofill.svelte';
 	import Modal from '@components/Modal.svelte';
 	import Input from '@pages/Actions/components/Input.svelte';
+	import ButtonGroup from './components/ButtonGroup.svelte';
+	import ConfirmAction from './components/ConfirmAction.svelte';
+	import GiveItemModal from './components/GiveItemModal.svelte';
+	import ChangeGroupModal from './components/ChangeGroupModal.svelte';
+
+	let showGroupModal = false;
+	let groupType: 'job' | 'gang' = 'job';
+	let showGiveItemModal = false;
+	let showActionButton = false;
+	let confirmText = '';
+	let confirmAction: () => void = () => {};
+
+	function confirmActionButton(text: string, action: () => void) {
+		confirmText = text;
+		confirmAction = () => {
+			action();
+			showActionButton = false;
+		};
+		showActionButton = true;
+	}
+
+	function send(data: string) {
+		return () =>
+		SendNUI('clickButton', {
+			data,
+			selectedData: { Player: { value: $SELECTED_PLAYER.id } },
+		});
+	}
 
 	let search = '';
 	let loading = false;
@@ -16,19 +45,24 @@
 	let playersOffline = [];
 	let banPlayer = false;
 	let kickPlayer = false;
+	let warnPlayer = false;
 	let selectedDataArray = {};
+	let showMoneyModal = false;
+	let isGivingMoney = true; // true = dar, false = remover
+	let moneyType = 'cash';
+	let moneyAmount = 0;
 
 	let banData = [
-		{ label: 'Permanent', value: '2147483647' },
-		{ label: '10 Minutes', value: '600' },
-		{ label: '30 Minutes', value: '1800' },
-		{ label: '1 Hour', value: '3600' },
-		{ label: '6 Hours', value: '21600' },
-		{ label: '12 Hours', value: '43200' },
-		{ label: '1 Day', value: '86400' },
-		{ label: '3 Days', value: '259200' },
-		{ label: '1 Week', value: '604800' },
-		{ label: '3 Weeks', value: '1814400' },
+		{ label: 'Permanente', value: '2147483647' },
+		{ label: '10 Minutos', value: '600' },
+		{ label: '30 Minutos', value: '1800' },
+		{ label: '1 Hora', value: '3600' },
+		{ label: '6 Horas', value: '21600' },
+		{ label: '12 Horas', value: '43200' },
+		{ label: '1 Dia', value: '86400' },
+		{ label: '3 Dias', value: '259200' },
+		{ label: '1 Semana', value: '604800' },
+		{ label: '3 Semanas', value: '1814400' },
 	];
 
 	function SelectData(selectedData) {
@@ -36,20 +70,39 @@
 	}
 
 	onMount(async () => {
-		try {
-			loading = true;
-			const players = await SendNUI('getPlayers');
-			if (players) {
-				playersOnline = players.filter((player) => player.online);
-				playersOffline = players.filter((player) => !player.online);
-				PLAYER.set(players);
+		const browserMode = get(BROWSER_MODE);
+
+		if (browserMode) {
+			// Só em modo browser: escuta mock do debugData
+			window.addEventListener('message', (event) => {
+				if (!event.data?.action) return;
+
+				switch (event.data.action) {
+					case 'setPlayersData':
+						playersOnline = event.data.data.filter((p) => p.online);
+						playersOffline = event.data.data.filter((p) => !p.online);
+						PLAYER.set(event.data.data);
+						break;
+				}
+			});
+		} else {
+			// Ambiente normal no jogo (FiveM)
+			try {
+				loading = true;
+				const players = await SendNUI('getPlayers');
+				if (players) {
+					playersOnline = players.filter((player) => player.online);
+					playersOffline = players.filter((player) => !player.online);
+					PLAYER.set(players);
+				}
+			} catch (error) {
+				console.error('Erro ao carregar jogadores:', error);
+			} finally {
+				loading = false;
 			}
-		} catch (error) {
-			console.error('Erro ao carregar jogadores:', error);
-		} finally {
-			loading = false;
 		}
 	});
+
 </script>
 
 
@@ -73,6 +126,7 @@
 						<Button {player} />
 					</div>
 				{/each}
+
 			{/if}
 
 			<p class="font-medium text-[1.7vh] mt-[2vh]">Jogadores Offline</p>
@@ -85,6 +139,7 @@
 						<Button {player} />
 					</div>
 				{/each}
+
 			{/if}
 		{/if}
 	</div>
@@ -92,7 +147,7 @@
 
 
 {#if $MENU_WIDE}
-	<div class="h-full w-[66vh] border-l-[0.2vh] border-tertiary p-[2vh]">
+  <div class="h-full w-[66vh] border-l-[0.2vh] border-tertiary p-[2vh] flex flex-col">
 		{#if !$SELECTED_PLAYER}
 			<div
 				class="h-full w-full flex flex-col items-center justify-center"
@@ -102,241 +157,160 @@
 		{:else}
 			<p class="text-[2vh] font-medium">
 				ID: {$SELECTED_PLAYER.id} - {$SELECTED_PLAYER.name}
+				{#if $SELECTED_PLAYER.metadata?.verified}
+					<span class="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-[1.2vh]">✅ Confiável</span>
+				{:else}
+					<span class="ml-2 bg-red-500 text-white px-2 py-0.5 rounded text-[1.2vh]">⛔ Suspeito</span>
+				{/if}
 			</p>
-			<div class="w-full h-[96.5%] pt-[2vh] flex flex-col gap-[1vh]">
+
+			<div class="w-full h-[96.5%] pt-[2vh] flex flex-col gap-[1vh] overflow-auto">
 				<p class="font-medium text-[1.7vh]">Ações Rápidas</p>
 				{#if $SELECTED_PLAYER.online}
-					<div class="w-full bg-tertiary flex rounded-[0.5vh]">
-						<button
-							title="Kick"
-							class="h-[4.5vh] w-full rounded-l-[0.5vh] hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
+					<ButtonGroup
+						buttons={[
+						{ icon: 'fa-solid fa-map-pin', label: 'Teleportar', onClick: send('teleportToPlayer') },
+						{ icon: 'fas fa-person-walking-arrow-loop-left', label: 'Puxar', onClick: send('bringPlayer') },
+						{ icon: 'fas fa-person-walking-arrow-right', label: 'Enviar de Volta', onClick: send('sendPlayerBack') },
+						{ icon: 'fas fa-heart-pulse', label: 'Reviver', onClick: send('revivePlayer') }
+						]}
+					/>
 
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
+					<p class="font-medium text-[1.7vh]">Gerenciamento</p>
+					<ButtonGroup
+						buttons={[
+						{ icon: 'fa-solid fa-check', label: 'Confiável/Suspeito', onClick: send('verifyPlayer') },
+						{
+							icon: 'fa-solid fa-money-bill-wave',
+							label: 'Dar Dinheiro',
+							onClick: () => {
+							isGivingMoney = true;
+							showMoneyModal = true;
+							},
+						},
+						{
+							icon: 'fa-solid fa-money-bill-wave',
+							label: 'Remover Dinheiro',
+							onClick: () => {
+							isGivingMoney = false;
+							showMoneyModal = true;
+							},
+						},
+						{ icon: 'fa-solid fa-shirt', label: 'Menu Roupas', onClick: send('clothing_menu') },
+						]}
+					/>
 
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Kick"
-							on:click={() => (kickPlayer = true)}
-						>
-							<i class="fas fa-user-minus"></i>
-						</button>
-						<button
-							title="Ban"
-							class="h-[4.5vh] w-full hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
+					<p class="font-medium text-[1.7vh]">Segurança</p>
+					<ButtonGroup
+						buttons={[
+						{ icon: 'fas fa-eye', label: 'Espectar', onClick: send('spectate_player') },
+						{ icon: 'fa-solid fa-triangle-exclamation', label: 'Advertência', onClick: () => (warnPlayer = true) },
+						{ icon: 'fas fa-user-slash', label: 'Kickar', onClick: () => (kickPlayer = true) },
+						{ icon: 'fas fa-ban', label: 'Banir', onClick: () => (banPlayer = true) },
+						]}
+					/>
 
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
+					<ButtonGroup
+						buttons={[
+						{ icon: 'fa-solid fa-handcuffs', label: 'Algemar/Desalgemar', onClick: send('toggle_cuffs') },
+						{ icon: 'fa-solid fa-snowflake', label: 'Congelar/Descongelar', onClick: send('freeze_player') },
+						{ icon: 'fa-solid fa-skull-crossbones', label: 'Matar', onClick: send('kill_player') },
+						{ 
+							icon: 'fa-solid fa-circle-check', 
+							label: 'Desbanir', 
+							onClick: () =>
+								confirmActionButton('Deseja realmente desbanir o jogador?', () => {
+									SendNUI('clickButton', {
+										data: 'unbanPlayer',
+										selectedData: {
+										Player: { value: $SELECTED_PLAYER.id }
+										}
+									});
+								})
+							},
+						]}
+					/>
 
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Ban"
-							on:click={() => (banPlayer = true)}
-						>
-							<i class="fas fa-ban"></i>
-						</button>
-						<button
-							title="Teleportar"
-							class="h-[4.5vh] w-full hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
+					<p class="font-medium text-[1.7vh]">Grupos</p>
+					<ButtonGroup
+						buttons={[
+							{ icon: 'fa-solid fa-user-tie', label: 'Definir Emprego', 
+							  	onClick: () => {
+									groupType = 'job';
+									showGroupModal = true;
+								}
+							},
+							{
+								icon: 'fa-solid fa-user-xmark',
+								label: 'Remover Emprego',
+								onClick: () =>
+									confirmActionButton('Deseja realmente remover o jogador do emprego?', () => {
+										SendNUI('clickButton', {
+											data: 'fire_job',
+											selectedData: {
+												Player: { value: $SELECTED_PLAYER.id },
+												Job: { value: 'unemployed' },
+												Grade: { value: 0 },
+											}
+										});
+									})
+							},
+							{ icon: 'fa-solid fa-users', label: 'Definir Gangue', 
+								onClick: () => {
+									groupType = 'gang';
+									showGroupModal = true;
+								}
+							},
+							{
+								icon: 'fa-solid fa-users-slash',
+								label: 'Demitir Gangue',
+								onClick: () =>
+									confirmActionButton('Deseja realmente remover o jogador da gangue?', () => {
+										SendNUI('clickButton', {
+											data: 'fire_gang',
+											selectedData: {
+												Player: { value: $SELECTED_PLAYER.id },
+												Gang: { value: 'none' },
+												Grade: { value: 0 },
+											}
+										});
+									})
+							}
+						]}
+					/>
 
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
+					<p class="font-medium text-[1.7vh]">Inventário</p>
+					<ButtonGroup
+						buttons={[
+							{
+								icon: 'fa-solid fa-share-from-square',
+								label: 'Dar item',
+								onClick: () => {
+									showGiveItemModal = true;
+								},
+							},
+							{ icon: 'fa-solid fa-box-open', label: 'Abrir Inventário', onClick: send('open_inventory') },
+							{
+							icon: 'fa-solid fa-hand-sparkles',
+							label: 'Limpar Inventário',
+							onClick: () =>
+								confirmActionButton('Deseja realmente limpar o inventário?', () => {
+									SendNUI('clickButton', {
+										data: 'clear_inventory',
+										selectedData: {
+											Player: { value: $SELECTED_PLAYER.id }
+										}
+									});
+								})
+							},
+						]}
+					/>
 
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Teleportar"
-							on:click={() =>
-								SendNUI('clickButton', {
-									data: 'teleportToPlayer',
-									selectedData: {
-										['Player']: {
-											value: $SELECTED_PLAYER.id,
-										},
-									},
-								})}
-						>
-							<i class="fas fa-person-walking-arrow-right"></i>
-						</button>
-						<button
-							title="Trazer"
-							class="h-[4.5vh] w-full hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
-
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
-
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Trazer"
-							on:click={() =>
-								SendNUI('clickButton', {
-									data: 'bringPlayer',
-									selectedData: {
-										['Player']: {
-											value: $SELECTED_PLAYER.id,
-										},
-									},
-								})}
-						>
-							<i class="fas fa-person-walking-arrow-loop-left"></i>
-						</button>
-						<button
-							title="Reviver"
-							class="h-[4.5vh] w-full hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
-
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
-
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Reviver"
-							on:click={() =>
-								SendNUI('clickButton', {
-									data: 'revivePlayer',
-									selectedData: {
-										['Player']: {
-											value: $SELECTED_PLAYER.id,
-										},
-									},
-								})}
-						>
-							<i class="fas fa-heart-pulse"></i>
-						</button>
-						<button
-							title="Modo Espectador"
-							class="h-[4.5vh] w-full hover:bg-secondary
-							relative
-							before:content-[attr(data-tip)]
-							before:absolute
-							before:px-3 before:py-2
-							before:left-1/2 before:-top-3
-							before:w-max before:max-w-xs
-							before:-translate-x-1/2 before:-translate-y-full
-							before:bg-tertiary before:text-white
-							before:rounded-md before:opacity-0
-							before:translate-all
-
-							after:absolute
-							after:left-1/2 after:-top-3
-							after:h-0 after:w-0
-							after:-translate-x-1/2 after:border-8
-							after:border-t-tertiary
-							after:border-l-transparent
-							after:border-b-transparent
-							after:border-r-transparent
-							after:opacity-0
-							after:transition-all
-
-							hover:before:opacity-100 hover:after:opacity-100
-							"
-							data-tip="Modo Espectador"
-							on:click={() =>
-								SendNUI('clickButton', {
-									data: 'spectate_player',
-									selectedData: {
-										['Player']: {
-											value: $SELECTED_PLAYER.id,
-										},
-									},
-								})}
-						>
-							<i class="fas fa-eye"></i>
-						</button>
-					</div>
 				{:else}
 					<p class="text-center text-[1.5vh] text-accent">Jogador offline - as ações foram limitadas</p>
 				{/if}
 				<div
-					class="h-[90%] overflow-auto flex flex-col gap-[1vh] select-text"
+					class="h-[100%] flex flex-col gap-[1vh] select-text"
 				>
 					<p class="font-medium text-[1.7vh]">Licenças</p>
 					<div
@@ -369,14 +343,15 @@
 					>
 						<p>RG: {$SELECTED_PLAYER.cid}</p>
 						<p>Nome: {$SELECTED_PLAYER.name}</p>
-						<p>Job: {$SELECTED_PLAYER.job} ({$SELECTED_PLAYER.job_grade})</p>
-						<p>Gangue: {$SELECTED_PLAYER.gang} ({$SELECTED_PLAYER.gang_grade})</p>
+						<p>Job: {$SELECTED_PLAYER.job ?? 'N/A'} ({$SELECTED_PLAYER.job_grade ?? '0'})</p>
+						<p>Gangue: {$SELECTED_PLAYER.gang ?? 'N/A'} ({$SELECTED_PLAYER.gang_grade ?? '0'})</p>
 						<p>Carteira: R$ {$SELECTED_PLAYER.cash}</p>
 						<p>Banco: R$ {$SELECTED_PLAYER.bank}</p>
 						<p>Telefone: {$SELECTED_PLAYER.phone}</p>
+						<p>Verificado: {$SELECTED_PLAYER.phone}</p>
 					</div>
 					<p class="font-medium text-[1.7vh]">Veículos</p>
-					{#each $SELECTED_PLAYER.vehicles as vehicle}
+					{#each $SELECTED_PLAYER.vehicles ?? [] as vehicle}
 						<div
 							class="w-full bg-tertiary flex flex-row rounded-[0.5vh] p-[1.5vh] text-[1.5vh]"
 						>
@@ -424,25 +399,25 @@
 		<Input
 			data={{
 				label: 'Reason',
-				value: 'reason',
-				id: 'reason',
+				value: 'Reason',
+				id: 'Reason',
 			}}
 			selectedData={SelectData}
 		/>
 		<Autofill
 			action={{
-				label: 'Duration',
-				value: 'duration',
-				id: 'duration',
+				label: 'Duração',
+				value: 'Duração',
+				id: 'Duração',
 			}}
-			label_title="Duration"
+			label_title="Duração"
 			data={banData}
 			selectedData={SelectData}
 		/>
 		<button
 			class="h-[3.8vh] px-[1.5vh] rounded-[0.5vh] bg-secondary hover:bg-opacity-90 border-[0.1vh] border-primary"
 			on:click={() => {
-				// console.log('Time: ', selectedDataArray['Duration'].value)
+				// console.log('Time: ', selectedDataArray['Duração'].value)
 				// console.log('reason: ', selectedDataArray['Reason'].value)
 				SendNUI('clickButton', {
 					data: 'banPlayer',
@@ -450,8 +425,8 @@
 						['Player']: {
 							value: $SELECTED_PLAYER.id,
 						},
-						['Duration']: {
-							value: selectedDataArray['Duration'].value,
+						['Duração']: {
+							value: selectedDataArray['Duração'].value,
 						},
 						['Reason']: {
 							value: selectedDataArray['Reason'].value,
@@ -479,8 +454,8 @@
 		<Input
 			data={{
 				label: 'Reason',
-				value: 'reason',
-				id: 'reason',
+				value: 'Reason',
+				id: 'Reason',
 			}}
 			selectedData={SelectData}
 		/>
@@ -494,7 +469,7 @@
 							value: $SELECTED_PLAYER.id,
 						},
 						['Reason']: {
-							value: $SELECTED_PLAYER.id,
+							value: selectedDataArray['Reason'].value,
 						},
 					},
 				})
@@ -503,4 +478,109 @@
 			<p>Kick</p>
 		</button>
 	</Modal>
+{/if}
+
+{#if warnPlayer}
+	<Modal>
+		<div class="flex justify-between">
+			<p class="font-medium text-[1.8vh]">Advertência {$SELECTED_PLAYER.name}</p>
+			<button
+				class="hover:text-accent"
+				on:click={() => (warnPlayer = false)}
+			>
+				<i class="fas fa-xmark"></i>
+			</button>
+		</div>
+		<Input
+			data={{
+				label: 'Reason',
+				value: 'Reason',
+				id: 'Reason',
+			}}
+			selectedData={SelectData}
+		/>
+		<button
+			class="h-[3.8vh] px-[1.5vh] rounded-[0.5vh] bg-secondary hover:bg-opacity-90 border-[0.1vh] border-primary"
+			on:click={() => {
+				SendNUI('clickButton', {
+					data: 'warn_player',
+					selectedData: {
+						['Player']: {
+							value: $SELECTED_PLAYER.id,
+						},
+						['Reason']: {
+							value: selectedDataArray['Reason'].value,
+						},
+					},
+				})
+			}}
+		>
+			<p>Enviar</p>
+		</button>
+	</Modal>
+{/if}
+
+{#if showMoneyModal}
+	<Modal>
+		<div class="flex justify-between items-center mb-[1vh]">
+			<p class="font-medium text-[1.8vh]">
+				{isGivingMoney ? 'Dar dinheiro' : 'Remover dinheiro'} para {$SELECTED_PLAYER.name}
+			</p>
+			<button on:click={() => (showMoneyModal = false)} class="hover:text-accent">
+				<i class="fas fa-xmark"></i>
+			</button>
+		</div>
+
+		<label class="text-[1.5vh] font-medium">Tipo:</label>
+		<select bind:value={moneyType} class="w-full bg-tertiary rounded p-[1vh] mb-[1vh]">
+			<option value="cash">Dinheiro</option>
+			<option value="bank">Banco</option>
+			<option value="crypto">Cripto</option>
+		</select>
+
+		<label class="text-[1.5vh] font-medium">Valor:</label>
+		<input
+			type="number"
+			bind:value={moneyAmount}
+			min="0"
+			class="w-full bg-tertiary rounded p-[1vh] mb-[2vh] text-white"
+			placeholder="Digite o valor"
+		/>
+
+		<button
+			class="h-[3.8vh] px-[1.5vh] rounded-[0.5vh] bg-secondary hover:bg-opacity-90 border border-primary w-full"
+			on:click={() => {
+				SendNUI('clickButton', {
+					data: isGivingMoney ? 'give_money' : 'remove_money',
+					selectedData: {
+						Player: { value: $SELECTED_PLAYER.id },
+						Type: { value: moneyType },
+						Amount: { value: moneyAmount },
+					},
+				});
+				showMoneyModal = false;
+			}}
+		>
+			<p>{isGivingMoney ? 'Confirmar Envio' : 'Confirmar Remoção'}</p>
+		</button>
+	</Modal>
+{/if}
+
+{#if showActionButton}
+  <ConfirmAction
+    {confirmText}
+    onConfirm={confirmAction}
+    onCancel={() => (showActionButton = false)}
+  />
+{/if}
+
+{#if showGiveItemModal}
+  <GiveItemModal
+    player={$SELECTED_PLAYER}
+    onClose={() => (showGiveItemModal = false)}
+  />
+{/if}
+
+{#if showGroupModal}
+  <ChangeGroupModal type={groupType} onClose={() => (showGroupModal = false)} />
 {/if}

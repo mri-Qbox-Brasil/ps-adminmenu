@@ -8,11 +8,11 @@
 		? player.name.slice(0, 20) + '...' 
 		: player.name
 
-	function SelectPlayer(player) {
-		SELECTED_PLAYER.set(player)
-		MENU_WIDE.set(true)
-		PLAYER_VEHICLES.set(player.vehicles);
-	}
+    function SelectPlayer(player) {
+        SELECTED_PLAYER.set(player);
+        MENU_WIDE.set(true);
+        PLAYER_VEHICLES.set(player.vehicles ?? []);
+    }
 </script>
 
 <button
@@ -27,7 +27,9 @@
     on:click={() => SelectPlayer(player)}
 >
     <div class="w-full flex items-center justify-between gap-[1vh]">
-        <p>{player.id ? `${player.id} - ${truncatedName}` : truncatedName}</p>
+        <p class:text-green-400={player.metadata?.verified}>
+            {player.id ? `${player.id} - ${truncatedName}` : truncatedName}
+        </p>
         <i class="fas fa-angle-right" />
     </div>
 </button>
