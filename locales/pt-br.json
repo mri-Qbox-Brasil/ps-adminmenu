@@ -97,5 +97,8 @@
     "vehicle_not_driver": "Não está no assento do motorista",
     "warned": "Você recebeu um aviso",
     "warngiven": "Avisado: ",
-    "weatherType": "O clima foi alterado para: %s"
+    "weatherType": "O clima foi alterado para: %s",
+    "veh_deleted": "Veículo com placa %s foi deletado com sucesso.",
+    "plate_doesnt_exist": "Veículo com placa %s não existe.",
+    "trunk_not_found": "Porta malas não encontrado (precisa estar spawnado)."
 }

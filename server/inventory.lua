@@ -70,8 +70,17 @@ RegisterNetEvent('ps-adminmenu:server:OpenStash', function(data)
 end)
 
 -- Open Trunk [ox side]
-RegisterNetEvent('ps-adminmenu:server:OpenTrunk', function(data)
-    exports.ox_inventory:forceOpenInventory(source, 'trunk', data)
+RegisterNetEvent('ps-adminmenu:server:OpenTrunk', function(data, vehiclePlate)
+    if not data or not CheckPerms(source, data.perms) then return end
+    if not vehiclePlate then
+        return QBCore.Functions.Notify(source, locale("no_plate"), 'error', 7500)
+    end
+    local plate = tostring(vehiclePlate)
+
+    local success = exports.ox_inventory:forceOpenInventory(source, 'trunk', tostring('trunk'..plate))
+    if not success then
+        return QBCore.Functions.Notify(source, locale("trunk_not_found"), 'error', 7500)
+    end
 end)
 
 -- Give Item

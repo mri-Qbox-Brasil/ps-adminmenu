@@ -174,3 +174,31 @@ RegisterNetEvent('ps-adminmenu:server:FixVehFor', function(data, selectedData)
         TriggerClientEvent('QBCore:Notify', src, locale("not_online"), "error")
     end
 end)
+
+-- Delete Vehicle by Plate
+RegisterNetEvent('ps-adminmenu:server:DeleteVehicleByPlate', function(data, selectedData)
+    local src = source
+
+    local data = CheckDataFromKey(data)
+    if not data or not CheckPerms(src, data.perms) then
+        QBCore.Functions.Notify(src, locale("no_perms"), "error", 5000)
+        return
+    end
+
+    local plate = selectedData["Plate"].value:upper()
+
+    if plate:len() > 8 then
+        QBCore.Functions.Notify(src, locale("plate_max"), "error", 5000)
+        return
+    end
+
+    if not CheckAlreadyPlate(plate) then
+        QBCore.Functions.Notify(src, locale("plate_doesnt_exist", plate), "error", 5000)
+        return
+    end
+
+    -- Apagar dados relacionados
+    MySQL.query.await('DELETE FROM player_vehicles WHERE plate = ?', { plate })
+
+    QBCore.Functions.Notify(src, locale("veh_deleted", plate), "success", 5000)
+end)

@@ -103,6 +103,37 @@
 		}
 	});
 
+	async function refreshAllPlayers() {
+		const browserMode = get(BROWSER_MODE);
+
+		if (browserMode) return; // modo mock não precisa recarregar real
+
+		try {
+			loading = true;
+			const players = await SendNUI('getPlayers');
+			if (players) {
+				playersOnline = players.filter((player) => player.online);
+				playersOffline = players.filter((player) => !player.online);
+				PLAYER.set(players);
+
+				// Atualiza o SELECTED_PLAYER se ainda existir
+				if ($SELECTED_PLAYER) {
+					const updated = players.find(p => p.id === $SELECTED_PLAYER.id);
+					if (updated) {
+						SELECTED_PLAYER.set({ ...updated });
+						PLAYER_VEHICLES.set([...updated.vehicles ?? []]);
+					} else {
+						SELECTED_PLAYER.set(null);
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Erro ao recarregar jogadores:', error);
+		} finally {
+			loading = false;
+		}
+	}
+
 </script>
 
 
@@ -361,9 +392,9 @@
 								</p>
 								<p>Placa: {vehicle.plate}</p>
 							</div>
-							<div class="ml-auto h-full flex items-center">
+							<div class="ml-auto h-full flex items-center gap-5">
 								<button
-									class="bg-secondary px-[1vh] py-[0.5vh] rounded-[0.5vh] border border-primary"
+									class="bg-secondary px-[1vh] py-[0.5vh] rounded-[0.5vh] border border-primary hover:bg-primary"
 									on:click={() =>
 										SendNUI('clickButton', {
 											data: 'spawnPersonalVehicle',
@@ -375,6 +406,38 @@
 										})}
 								>
 									Spawnar
+								</button>
+								<button
+									class="bg-secondary px-[1vh] py-[0.5vh] rounded-[0.5vh] border border-primary hover:bg-primary"
+									on:click={() =>
+										SendNUI('clickButton', {
+											data: 'open_trunk',
+											selectedData: {
+												['Plate']: {
+													value: vehicle.plate,
+												},
+											},
+										})}
+								>
+									Porta-Malas
+								</button>
+								<button
+									class="bg-red-500 px-[1vh] py-[0.5vh] rounded-[0.5vh] border border-primary hover:bg-red-600"
+									on:click={() => {
+										SendNUI('clickButton', {
+											data: 'deletePersonalVehicle',
+											selectedData: {
+												['Plate']: {
+													value: vehicle.plate,
+												},
+											},
+										});
+										setTimeout(() => {
+											refreshAllPlayers();
+										}, 500);
+									}}
+								>
+									<i class="fa-solid fa-trash"></i> Permanente
 								</button>
 							</div>
 						</div>

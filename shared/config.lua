@@ -215,7 +215,7 @@ Config.Actions = {
 
     ["set_ammo"] = {
         label = "Definir Munição",
-        perms = "admin",
+        perms = "mod",
         dropdown = {
             { label = "Quantidade de Munição", option = "text" },
             { label = "Confirmar",      option = "button", type = "client", event = "ps-adminmenu:client:SetAmmo" },
@@ -231,7 +231,7 @@ Config.Actions = {
 
     ["give_car"] = {
         label = "Dar Carro",
-        perms = "admin",
+        perms = "mod",
         dropdown = {
             { label = "Vehicle",           option = "dropdown", data = "vehicles" },
             { label = "Player",            option = "dropdown", data = "players" },
@@ -271,7 +271,7 @@ Config.Actions = {
 
     -- ["set_perms"] = {
     --     label = "Definir Permissões",
-    --     perms = "admin",
+    --     perms = "mod",
     --     dropdown = {
     --         { label = "Player",  option = "dropdown", data = "players" },
     --         {
@@ -464,7 +464,7 @@ Config.Actions = {
 
     ["give_money"] = {
         label = "Dar Dinheiro",
-        perms = "admin",
+        perms = "mod",
         dropdown = {
             { label = "Player", option = "dropdown", data = "players" },
             { label = "Amount", option = "text" },
@@ -483,7 +483,7 @@ Config.Actions = {
 
     ["give_money_all"] = {
         label = "Dar Dinheiro para Todos",
-        perms = "admin",
+        perms = "mod",
         dropdown = {
             { label = "Amount",  option = "text" },
             {
@@ -501,7 +501,7 @@ Config.Actions = {
 
     ["remove_money"] = {
         label = "Remover Dinheiro",
-        perms = "admin",
+        perms = "mod",
         dropdown = {
             { label = "Player", option = "dropdown", data = "players" },
             { label = "Amount", option = "text" },
@@ -765,6 +765,12 @@ Config.PlayerActions = {
         perms = "mod",
         type = "client"
     },
+    ["deletePersonalVehicle"] = {
+        label = "Deletar Veículo Pessoal",
+        event = "ps-adminmenu:server:DeleteVehicleByPlate",
+        perms = "mod",
+        type = "server"
+    },
     ["banPlayer"] = {
         label = "Banir Jogador",
         event = "ps-adminmenu:server:BanPlayer",
@@ -783,7 +789,7 @@ Config.OtherActions = {
     ["toggleDevmode"] = {
         type = "client",
         event = "ps-adminmenu:client:ToggleDev",
-        perms = "admin",
+        perms = "mod",
         label = "Ativar/Desativar Modo Desenvolvedor"
     }
 }

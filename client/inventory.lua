@@ -32,7 +32,7 @@ RegisterNetEvent('ps-adminmenu:client:openTrunk', function(data, selectedData)
     local vehiclePlate = selectedData["Plate"].value
 
     if Config.Inventory == 'ox_inventory' then
-        TriggerServerEvent("ps-adminmenu:server:OpenTrunk", vehiclePlate)
+        TriggerServerEvent("ps-adminmenu:server:OpenTrunk", data, vehiclePlate)
     else
         TriggerServerEvent("inventory:server:OpenInventory", "trunk", tostring(vehiclePlate))
         TriggerEvent("inventory:client:SetCurrentStash", tostring(vehiclePlate))
