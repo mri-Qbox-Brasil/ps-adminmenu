@@ -1,3 +1,59 @@
+RegisterNetEvent('ps-adminmenu:server:unban_cid', function(data, selectedData)
+    local data = CheckDataFromKey(data)
+    if not data or not CheckPerms(source, data.perms) then return end
+
+    local src = source
+    local citizenid = selectedData["cid"].value
+    if not citizenid then
+        TriggerClientEvent('QBCore:Notify', src, "CID inválido.", "error", 5000)
+        return
+    end
+
+    -- Busca o license (pode estar com prefixo license2:)
+    MySQL.scalar('SELECT license FROM players WHERE citizenid = ?', { citizenid }, function(license)
+        if not license then
+            TriggerClientEvent('QBCore:Notify', src, ("❌ Nenhum jogador encontrado com CID %s."):format(citizenid), "error", 5000)
+            return
+        end
+
+        -- Gera as duas versões possíveis de license
+        local license1 = license:gsub("^license2:", "license:")
+        local license2 = license:gsub("^license:", "license2:")
+
+        -- Deleta qualquer ban que use license:xxx ou license2:xxx
+        MySQL.update('DELETE FROM bans WHERE license = ? OR license = ?', { license1, license2 }, function(affectedRows)
+            if affectedRows and affectedRows > 0 then
+                TriggerClientEvent('QBCore:Notify', src, ("✅ Jogador com CID %s foi desbanido."):format(citizenid), "success", 5000)
+            else
+                TriggerClientEvent('QBCore:Notify', src, ("⚠️ Nenhum banimento encontrado com as licenças associadas ao CID %s."):format(citizenid), "error", 5000)
+            end
+        end)
+    end)
+end)
+
+RegisterNetEvent('ps-adminmenu:server:delete_cid', function(data, selectedData)
+    local data = CheckDataFromKey(data)
+    if not data or not CheckPerms(source, data.perms) then return end
+
+    local src = source
+    local citizenid = selectedData["cid"].value
+    if not citizenid then
+        TriggerClientEvent('QBCore:Notify', src, "CID inválido.", "error", 5000)
+        return
+    end
+
+    -- Deleta o jogador usando oxmysql com callback garantido
+    MySQL.update('DELETE FROM players WHERE citizenid = ?', { citizenid }, function(affectedRows)
+
+        if affectedRows and affectedRows > 0 then
+            TriggerClientEvent('QBCore:Notify', src, ("✅ Jogador com CID %s foi deletado."):format(citizenid), "success", 5000)
+        else
+            TriggerClientEvent('QBCore:Notify', src, ("❌ Nenhum jogador encontrado com CID %s."):format(citizenid), "error", 5000)
+        end
+    end)
+end)
+
+
 -- Ban Player
 RegisterNetEvent('ps-adminmenu:server:BanPlayer', function(data, selectedData)
     local data = CheckDataFromKey(data)

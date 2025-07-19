@@ -783,6 +783,18 @@ Config.PlayerActions = {
         perms = "mod",
         type = "server"
     },
+    ["unban_cid"] = {
+        label = "Banir Jogador",
+        event = "ps-adminmenu:server:unban_cid",
+        perms = "mod",
+        type = "server"
+    },
+    ["delete_cid"] = {
+        label = "Excluir Jogador",
+        event = "ps-adminmenu:server:delete_cid",
+        perms = "mod",
+        type = "server"
+    },
 }
 
 Config.OtherActions = {

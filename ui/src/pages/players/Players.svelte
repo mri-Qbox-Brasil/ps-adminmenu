@@ -339,6 +339,36 @@
 
 				{:else}
 					<p class="text-center text-[1.5vh] text-accent">Jogador offline - as ações foram limitadas</p>
+					<ButtonGroup
+						buttons={[
+						{ 
+							icon: 'fa-solid fa-skull-crossbones',
+							label: 'Excluir Personagem', 
+							onClick: () =>
+								confirmActionButton('Deseja realmente excluir o personagem do jogador?', () => {
+									SendNUI('clickButton', {
+										data: 'delete_cid',
+										selectedData: {
+										cid: { value: $SELECTED_PLAYER.cid }
+										}
+									});
+								})
+							},
+						{ 
+							icon: 'fa-solid fa-circle-check', 
+							label: 'Desbanir', 
+							onClick: () =>
+								confirmActionButton('Deseja realmente desbanir o jogador?', () => {
+									SendNUI('clickButton', {
+										data: 'unban_cid',
+										selectedData: {
+										cid: { value: $SELECTED_PLAYER.cid }
+										}
+									});
+								})
+							},
+						]}
+					/>
 				{/if}
 				<div
 					class="h-[100%] flex flex-col gap-[1vh] select-text"
