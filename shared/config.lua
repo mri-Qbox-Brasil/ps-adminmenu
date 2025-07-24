@@ -795,6 +795,12 @@ Config.PlayerActions = {
         perms = "mod",
         type = "server"
     },
+    ["unban_rowid"] = {
+        label = "Desbanir Jogador",
+        event = "ps-adminmenu:server:unban_rowid",
+        perms = "mod",
+        type = "server"
+    },
 }
 
 Config.OtherActions = {

@@ -185,6 +185,14 @@ RegisterNetEvent('ps-adminmenu:server:verifyPlayer', function(data, selectedData
 		local newState = not currentState
 		Player.Functions.SetMetaData("verified", newState)
 
+		if newState then
+			local admin = QBCore.Functions.GetPlayer(source)
+			local adminName = admin and admin.PlayerData.charinfo and (admin.PlayerData.charinfo.firstname .. ' ' .. admin.PlayerData.charinfo.lastname) or GetPlayerName(source)
+			Player.Functions.SetMetaData("verified_by", adminName)
+		else
+			Player.Functions.SetMetaData("verified_by", nil)
+		end
+
 		local message = newState and "Jogador marcado como verificado." or "Verificação removida do jogador."
 		TriggerClientEvent('QBCore:Notify', source, message, newState and "success" or "error")
 	end
@@ -413,4 +421,30 @@ RegisterNetEvent("ps-adminmenu:server:setPed", function(data, selectedData)
     end
 
     TriggerClientEvent("ps-adminmenu:client:setPed", Player.PlayerData.source, ped)
+end)
+
+-- Callback para listar todos os bans
+lib.callback.register('ps-adminmenu:callback:GetBans', function(source)
+    local bans = MySQL.query.await('SELECT * FROM bans') or {}
+    return bans
+end)
+
+-- Desbanir por ID da linha
+RegisterNetEvent('ps-adminmenu:server:unban_rowid', function(data, selectedData)
+    local data = CheckDataFromKey(data)
+    if not data or not CheckPerms(source, data.perms) then return end
+
+    local src = source
+    local banId = selectedData["ban_id"] and tonumber(selectedData["ban_id"].value)
+    if not banId then
+        TriggerClientEvent('QBCore:Notify', src, "ID do banimento inválido.", "error", 5000)
+        return
+    end
+
+    local affectedRows = MySQL.update.await('DELETE FROM bans WHERE id = ?', { banId })
+    if affectedRows and affectedRows > 0 then
+        TriggerClientEvent('QBCore:Notify', src, ("✅ Banimento removido com sucesso (ID %s)."):format(banId), "success", 5000)
+    else
+        TriggerClientEvent('QBCore:Notify', src, ("❌ Nenhum banimento encontrado com ID %s."):format(banId), "error", 5000)
+    end
 end)

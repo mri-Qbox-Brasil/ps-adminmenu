@@ -13,6 +13,7 @@
 	import Credits from '@pages/Credits/MRIQbox.svelte'
 	import Dashboard from '@pages/Dashboard/Dashboard.svelte'
 	import Groups from '@pages/Groups/Groups.svelte'
+	import Bans from '@pages/Bans.svelte'
 </script>
 
 <div
@@ -40,6 +41,8 @@
 			<Credits />
 		{:else if $ACTIVE_PAGE == 'Dashboard'}
 			<Dashboard />
+		{:else if $ACTIVE_PAGE == 'Banimentos'}
+			<Bans />
 		{/if}
 	</div>
 </div>

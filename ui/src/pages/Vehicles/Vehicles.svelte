@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { MENU_WIDE } from '@store/stores';
 	import { VEHICLES } from '@store/server';
 	import Header from '@components/Header.svelte';
@@ -7,16 +7,14 @@
 	let search = '';
 
 	$: SortedVehicles = $VEHICLES
-		? $VEHICLES.slice().sort((a, b) => a.name.localeCompare(b.name))
+		? $VEHICLES.slice().sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
 		: [];
-	$: FilteredVehicles = SortedVehicles.filter((vehicle) =>
+	$: FilteredVehicles = SortedVehicles.filter((vehicle: any) =>
 		[
 			vehicle.name?.toLowerCase(),
-			vehicle.brand?.toLowerCase(),
-			vehicle.category?.toLowerCase(),
+			vehicle.plate?.toLowerCase(),
 			vehicle.model?.toLowerCase(),
-			vehicle.price?.toString(),
-		].some((property) => property?.includes(search.toLowerCase()))
+		].some((field) => field?.includes(search.toLowerCase()))
 	);
 
 	function spawnVehicle(vehicle) {
@@ -29,8 +27,13 @@
 		});
 	}
 
-	const getVehicleImage = (model) =>
+	const getVehicleImage = (model: any) =>
 		`https://docs.fivem.net/vehicles/${model}.webp`;
+
+	let imageError: Record<string, boolean> = {};
+	function handleImgError(hash: any) {
+		imageError = { ...imageError, [hash]: true };
+	}
 </script>
 
 
@@ -39,7 +42,7 @@
 		<Header
 			title="Veículos"
 			hasSearch={true}
-			hasLargeMenu={true}
+			hasLargeMenu={$MENU_WIDE}
 			onSearchInput={(event) => (search = event.target.value)}
 		/>
 
@@ -55,15 +58,23 @@
 					</small>
 					{#each FilteredVehicles as vehicle (vehicle.hash)}
 						<div class="relative flex items-center gap-6 bg-secondary p-6 rounded-lg shadow-md">
-							<img
-								src={getVehicleImage(vehicle.model)}
-								onerror="this.src='https://via.placeholder.com/128x80?text=No+Image'"
-								alt={vehicle.name}
-								class="vehicle-image rounded-lg object-cover"
-							/>
+							{#if !imageError[String(vehicle.hash)]}
+								<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
+									<img
+										src={getVehicleImage(vehicle.model)}
+										alt={vehicle.name || 'Desconhecido'}
+										class="object-contain w-full h-full"
+										on:error={() => handleImgError(vehicle.hash)}
+									/>
+								</div>
+							{:else}
+								<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
+									<i class="fa-solid fa-car text-5xl text-gray-500"></i>
+								</div>
+							{/if}
 							<div class="flex flex-col flex-grow">
 								<span class="text-white font-bold text-xl truncate">
-									{$MENU_WIDE ? vehicle.name || 'Sem nome' : (vehicle.name || 'Sem nome').substring(0, 20) + (vehicle.name.length > 20 ? '...' : '')}
+									{vehicle.name || 'Desconhecido'}
 								</span>
 								<div class="text-gray-400 text-base">
 									Marca: {vehicle.brand || 'Sem marca'}

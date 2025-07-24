@@ -189,7 +189,12 @@
 			<p class="text-[2vh] font-medium">
 				ID: {$SELECTED_PLAYER.id} - {$SELECTED_PLAYER.name}
 				{#if $SELECTED_PLAYER.metadata?.verified}
-					<span class="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-[1.2vh]">✅ Confiável</span>
+					<span class="ml-2 bg-green-500 text-white px-2 py-0.5 rounded text-[1.2vh]">
+						✅ Confiável
+						{#if $SELECTED_PLAYER.metadata?.verified_by}
+							por {$SELECTED_PLAYER.metadata.verified_by}
+						{/if}
+					</span>
 				{:else}
 					<span class="ml-2 bg-red-500 text-white px-2 py-0.5 rounded text-[1.2vh]">⛔ Suspeito</span>
 				{/if}

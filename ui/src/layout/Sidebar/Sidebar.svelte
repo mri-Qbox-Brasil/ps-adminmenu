@@ -6,6 +6,7 @@
 	let navigation = [
 		{ value: 'Chat Staff', icon: 'fas fa-message' },
 		{ value: 'Jogadores', icon: 'fas fa-user' },
+		{ value: 'Banimentos', icon: 'fas fa-ban' },
 		{ value: 'Grupos', icon: 'fas fa-users' },
 		{ value: 'Resources', icon: 'fas fa-server' },
 		{ value: 'Comandos', icon: 'fas fa-slash' },

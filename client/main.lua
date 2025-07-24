@@ -35,6 +35,11 @@ RegisterNUICallback('getServerInfo', function(_, cb)
     cb(serverInfo)
 end)
 
+RegisterNUICallback("ps-adminmenu:callback:GetBans", function(data, cb)
+    local bans = lib.callback.await('ps-adminmenu:callback:GetBans', false)
+    cb(bans)
+end)
+
 
 -- Event Handlers
 AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
