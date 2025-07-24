@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { MENU_WIDE } from '@store/stores';
 	import { ITEMS } from '@store/server';
 	import Header from '@components/Header.svelte';
@@ -8,25 +8,25 @@
 
 	let search = '';
 	let isModalOpen = false;
-	let selectedItem = null;
-	let selectedPlayer = null;
+	let selectedItem: any = null;
+	let selectedPlayer: any = null;
 	let quantity = 1;
+	let imageError = {};
 
 	$: SortedItems = $ITEMS
-		? $ITEMS.slice().sort((a, b) => a.name.localeCompare(b.name))
+		? $ITEMS.slice().sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''))
 		: [];
 	$: FilteredItems = SortedItems.filter(
-		(item) =>
-			item.name.toLowerCase().includes(search.toLowerCase()) ||
-			item.item.toLowerCase().includes(search.toLowerCase()) ||
-			(item.description &&
-				item.description.toLowerCase().includes(search.toLowerCase()))
+		(item: any) =>
+			(item.name || '').toLowerCase().includes(search.toLowerCase()) ||
+			(item.item || '').toLowerCase().includes(search.toLowerCase()) ||
+			(item.description && item.description.toLowerCase().includes(search.toLowerCase()))
 	);
 
-	const getImageUrl = (itemId) =>
+	const getImageUrl = (itemId: any) =>
 		`https://cfx-nui-ox_inventory/web/images/${itemId}.png`;
 
-	function openModal(item) {
+	function openModal(item: any) {
 		selectedItem = item;
 		isModalOpen = true;
 		quantity = 1;
@@ -37,6 +37,10 @@
 		selectedItem = null;
 		selectedPlayer = null;
 		quantity = 1;
+	}
+
+	function handleImgError(itemId: any) {
+		imageError = { ...imageError, [itemId]: true };
 	}
 
 	async function spawnItemForPlayer() {
@@ -79,11 +83,18 @@
 					</small>
 					{#each FilteredItems as item (item.item)}
 						<div class="relative flex items-center gap-4 bg-secondary p-4 rounded-lg shadow-md">
-							<div
-								class="item-image"
-								style="background-image: url({getImageUrl(item.item)});"
-								data-fallback={!item.item}
-							></div>
+							<div class="flex items-center justify-center min-w-[6rem] min-h-[6rem] max-w-[6rem] max-h-[6rem] bg-[#2c2c2c] border border-[#444] rounded">
+								{#if !imageError[item.item]}
+									<img
+										src={getImageUrl(item.item)}
+										alt={item.name || 'Sem nome'}
+										class="object-contain w-full h-full"
+										on:error={() => handleImgError(item.item)}
+									/>
+								{:else}
+									<i class="fa-solid fa-box text-4xl text-gray-500"></i>
+								{/if}
+							</div>
 							<div class="flex flex-col flex-grow">
 								<span class="text-white font-bold text-2xl truncate">
 									{$MENU_WIDE ? item.name || 'Sem nome' : (item.name || 'Sem nome').substring(0, 20) + (item.name.length > 20 ? '...' : '')}
