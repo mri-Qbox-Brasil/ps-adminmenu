@@ -12,15 +12,15 @@
 
 {#if hasSearch}
 	<div
-		class="w-full h-[4.5vh] rounded-[0.5vh] flex items-center justify-center gap-[1vh] bg-tertiary"
+		class="w-full h-[4.5vh] rounded-[0.5vh] flex items-center justify-start gap-2 bg-tertiary px-2"
 	>
-		<i class="fas fa-magnifying-glass text-[1.5vh]" />
+		<i class="fas fa-magnifying-glass text-[1.5vh] ml-2" />
 		<input
 			on:input={onSearchInput}
 			bind:value={search}
 			type="text"
 			placeholder="Procurar"
-			class="h-full px-[1vh] bg-transparent text-[1.7vh] {hasLargeMenu ? $MENU_WIDE ? 'w-[94%]' : 'w-[80%]' : 'w-[80%]'}"
+			class="h-full px-[1vh] bg-transparent text-[1.7vh] flex-1"
 		/>
 	</div>
 {/if}

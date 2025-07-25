@@ -14,6 +14,7 @@
 	import ConfirmAction from './components/ConfirmAction.svelte';
 	import GiveItemModal from './components/GiveItemModal.svelte';
 	import ChangeGroupModal from './components/ChangeGroupModal.svelte';
+	import { ReceiveNUI } from '@utils/ReceiveNUI';
 
 	let showGroupModal = false;
 	let groupType: 'job' | 'gang' = 'job';
@@ -134,15 +135,31 @@
 		}
 	}
 
+	ReceiveNUI('refreshPlayers', () => {
+		refreshAllPlayers();
+	});
+
 </script>
 
 
 <div class="h-full w-[33vh] px-[2vh]">
 	<Header
-		title={'Jogadores'}
+		title="Jogadores"
 		hasSearch={true}
+		hasLargeMenu={$MENU_WIDE}
 		onSearchInput={(event) => (search = event.target.value)}
 	/>
+	<div class="flex justify-end m-4">
+		<button
+			class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition duration-150 text-md"
+			on:click={refreshAllPlayers}
+			disabled={loading}
+			title="Atualizar lista de jogadores"
+		>
+			<i class="fas fa-rotate"></i>
+			<span class="hidden sm:inline">{loading ? 'Atualizando...' : 'Atualizar'}</span>
+		</button>
+	</div>
 	<div class="w-full h-[84%] flex flex-col gap-[1vh] mt-[1vh] overflow-auto">
 		{#if loading}
 			<Spinner />

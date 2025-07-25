@@ -40,6 +40,11 @@ RegisterNUICallback("ps-adminmenu:callback:GetBans", function(data, cb)
     cb(bans)
 end)
 
+RegisterNUICallback("sendNUI", function(data, cb)
+    SetNuiFocus(false, false)
+    SendNUIMessage(data)
+    cb("ok")
+end)
 
 -- Event Handlers
 AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
@@ -118,4 +123,12 @@ RegisterNUICallback("executeCommand", function(data, cb)
 	local args = data.args
 	ExecuteCommand(command, args)
 	cb(command)
+end)
+
+RegisterNetEvent('ps-adminmenu:client:RefreshBans', function()
+    SendNUIMessage({ action = 'refreshBans' })
+end)
+
+RegisterNetEvent('ps-adminmenu:client:RefreshPlayers', function()
+    SendNUIMessage({ action = 'refreshPlayers' })
 end)

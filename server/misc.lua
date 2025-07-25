@@ -47,6 +47,7 @@ RegisterNetEvent('ps-adminmenu:server:delete_cid', function(data, selectedData)
 
         if affectedRows and affectedRows > 0 then
             TriggerClientEvent('QBCore:Notify', src, ("✅ Jogador com CID %s foi deletado."):format(citizenid), "success", 5000)
+            TriggerClientEvent('ps-adminmenu:client:RefreshPlayers', src)
         else
             TriggerClientEvent('QBCore:Notify', src, ("❌ Nenhum jogador encontrado com CID %s."):format(citizenid), "error", 5000)
         end
@@ -85,6 +86,7 @@ RegisterNetEvent('ps-adminmenu:server:BanPlayer', function(data, selectedData)
     end
 
     QBCore.Functions.Notify(source, locale("playerbanned", player, banTime, reason), 'success', 7500)
+    TriggerClientEvent('ps-adminmenu:client:RefreshPlayers', src)
 end)
 
 -- Unban Player
@@ -122,6 +124,7 @@ RegisterNetEvent('ps-adminmenu:server:UnbanPlayer', function(data, selectedData)
         if src > 0 then
             QBCore.Functions.Notify(src, 'Jogador desbanido com sucesso.', 'success', 7500)
         end
+        TriggerClientEvent('ps-adminmenu:client:RefreshPlayers', src)
     else
         if src > 0 then
             QBCore.Functions.Notify(src, 'Nenhum ban ativo encontrado para esse jogador.', 'error', 7500)
@@ -168,6 +171,7 @@ RegisterNetEvent('ps-adminmenu:server:KickPlayer', function(data, selectedData)
     end
 
     DropPlayer(target.PlayerData.source, locale("kicked") .. '\n' .. locale("reason") .. reason)
+    TriggerClientEvent('ps-adminmenu:client:RefreshPlayers', src)
 end)
 
 -- Verify Player
@@ -444,7 +448,8 @@ RegisterNetEvent('ps-adminmenu:server:unban_rowid', function(data, selectedData)
     local affectedRows = MySQL.update.await('DELETE FROM bans WHERE id = ?', { banId })
     if affectedRows and affectedRows > 0 then
         TriggerClientEvent('QBCore:Notify', src, ("✅ Banimento removido com sucesso (ID %s)."):format(banId), "success", 5000)
+        TriggerClientEvent('ps-adminmenu:client:RefreshBans', -1)
     else
-        TriggerClientEvent('QBCore:Notify', src, ("❌ Nenhum banimento encontrado com ID %s."):format(banId), "error", 5000)
+        TriggerClientEvent('QBCore:Notify', src, "Nenhum banimento removido.", "error", 5000)
     end
 end)

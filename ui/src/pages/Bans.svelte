@@ -6,6 +6,8 @@ import { SendNUI } from '@utils/SendNUI';
 import ConfirmAction from '@pages/Players/components/ConfirmAction.svelte';
 import ActionButton from '@pages/Players/components/ActionButton.svelte';
 import { MENU_WIDE } from '@store/stores';
+import { tick } from 'svelte';
+import { ReceiveNUI } from '@utils/ReceiveNUI';
 
 let bans: any[] = [];
 let loading = false;
@@ -33,7 +35,9 @@ async function fetchBans() {
   loading = true;
   try {
     const result = await SendNUI('ps-adminmenu:callback:GetBans');
-    bans = result || [];
+    bans = [];
+    await tick();
+    bans = result ? [...result] : [];
   } catch (e) {
     bans = [];
   } finally {
@@ -42,6 +46,10 @@ async function fetchBans() {
 }
 
 onMount(fetchBans);
+
+ReceiveNUI('refreshBans', () => {
+  fetchBans();
+});
 
 function formatDate(ts: number | string) {
   if (!ts) return 'N/A';
