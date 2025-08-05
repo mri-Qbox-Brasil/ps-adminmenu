@@ -14,7 +14,7 @@ local function getVehicles(cid)
                 model = v.vehicle or "N/A"
             }
         end
-        
+
         vehicles[#vehicles + 1] = {
             id = k,
             cid = cid,
@@ -156,6 +156,14 @@ RegisterNetEvent('ps-adminmenu:server:SetJob', function(data, selectedData)
 
     local playerId, Job, Grade = selectedData["Player"].value, selectedData["Job"].value, selectedData["Grade"].value
     local Player = QBCore.Functions.GetPlayer(tonumber(playerId))
+    if not Player then
+        print(playerId)
+        Player = QBCore.Functions.GetOfflinePlayerByCitizenId(playerId)
+        if not Player then
+            TriggerClientEvent('QBCore:Notify', src, 'Jogador offline não encontrado.', 'error')
+            return
+        end
+    end
     local name, citizenid, jobInfo, grade
 
     local JOBS
@@ -183,32 +191,12 @@ RegisterNetEvent('ps-adminmenu:server:SetJob', function(data, selectedData)
         citizenid = Player.PlayerData.citizenid
 
         Player.Functions.SetJob(tostring(Job), tonumber(Grade))
+        Player.Functions.Save()
         if Config.RenewedPhone then
             exports['qb-phone']:hireUser(tostring(Job), citizenid, tonumber(Grade))
         end
 
         QBCore.Functions.Notify(src, locale("jobset", name, Job, grade.name), 'success', 5000)
-    else -- Setar player Offline
-        local result = MySQL.Sync.fetchAll("SELECT charinfo, job FROM players WHERE citizenid = ?", { playerId })
-        if result and result[1] then
-            local charinfo = json.decode(result[1].charinfo) or {}
-            name = (charinfo.firstname or "N/A") .. " " .. (charinfo.lastname or "")
-            citizenid = playerId
-
-            MySQL.Sync.execute("UPDATE players SET job = ? WHERE citizenid = ?", {
-                json.encode({
-                    name = Job,
-                    label = jobInfo.label,
-                    grade = tonumber(Grade),
-                    payment = grade.payment
-                }),
-                citizenid
-            })
-
-            QBCore.Functions.Notify(src, locale("jobset", name, Job, grade.name), 'success', 5000)
-        else
-            TriggerClientEvent('QBCore:Notify', src, 'Jogador offline não encontrado.', 'error')
-        end
     end
 end)
 
@@ -221,6 +209,13 @@ RegisterNetEvent('ps-adminmenu:server:SetGang', function(data, selectedData)
 
     local playerId, Gang, Grade = selectedData["Player"].value, selectedData["Gang"].value, selectedData["Grade"].value
     local Player = QBCore.Functions.GetPlayer(tonumber(playerId))
+    if not Player then
+        Player = QBCore.Functions.GetOfflinePlayerByCitizenId(playerId)
+        if not Player then
+            TriggerClientEvent('QBCore:Notify', src, 'Jogador offline não encontrado.', 'error')
+            return
+        end
+    end
     local name, citizenid, GangInfo, grade
 
     local GANGS
@@ -248,27 +243,8 @@ RegisterNetEvent('ps-adminmenu:server:SetGang', function(data, selectedData)
         citizenid = Player.PlayerData.citizenid
 
         Player.Functions.SetGang(tostring(Gang), tonumber(Grade))
+        Player.Functions.Save()
         QBCore.Functions.Notify(src, locale("gangset", name, Gang, grade.name), 'success', 5000)
-    else
-        local result = MySQL.Sync.fetchAll("SELECT charinfo, gang FROM players WHERE citizenid = ?", { playerId })
-        if result and result[1] then
-            local charinfo = json.decode(result[1].charinfo) or {}
-            name = (charinfo.firstname or "N/A") .. " " .. (charinfo.lastname or "")
-            citizenid = playerId
-
-            MySQL.Sync.execute("UPDATE players SET gang = ? WHERE citizenid = ?", {
-                json.encode({
-                    name = Gang,
-                    label = GangInfo.label,
-                    grade = tonumber(Grade),
-                }),
-                citizenid
-            })
-
-            QBCore.Functions.Notify(src, locale("gangset", name, Gang, grade.name), 'success', 5000)
-        else
-            TriggerClientEvent('QBCore:Notify', src, 'Jogador offline não encontrado.', 'error')
-        end
     end
 end)
 
