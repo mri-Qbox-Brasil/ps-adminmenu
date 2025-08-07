@@ -190,8 +190,13 @@ RegisterNetEvent('ps-adminmenu:server:SetJob', function(data, selectedData)
         name = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
         citizenid = Player.PlayerData.citizenid
 
-        Player.Functions.SetJob(tostring(Job), tonumber(Grade))
-        Player.Functions.Save()
+        if GetResourceState('qbx_core') == 'started' then
+            exports.qbx_core:SetJob(tostring(citizenid), tostring(Job), tonumber(Grade))
+        else
+            Player.Functions.SetJob(tostring(Job), tonumber(Grade))
+            Player.Functions.Save()
+        end
+
         if Config.RenewedPhone then
             exports['qb-phone']:hireUser(tostring(Job), citizenid, tonumber(Grade))
         end
@@ -242,8 +247,13 @@ RegisterNetEvent('ps-adminmenu:server:SetGang', function(data, selectedData)
         name = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
         citizenid = Player.PlayerData.citizenid
 
-        Player.Functions.SetGang(tostring(Gang), tonumber(Grade))
-        Player.Functions.Save()
+        if GetResourceState('qbx_core') == 'started' then
+            exports.qbx_core:SetGang(tostring(citizenid), tostring(Gang), tonumber(Grade))
+        else
+            Player.Functions.SetGang(tostring(Gang), tonumber(Grade))
+            Player.Functions.Save()
+        end
+
         QBCore.Functions.Notify(src, locale("gangset", name, Gang, grade.name), 'success', 5000)
     end
 end)
