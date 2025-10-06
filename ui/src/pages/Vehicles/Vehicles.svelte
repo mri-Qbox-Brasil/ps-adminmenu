@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { MENU_WIDE } from '@store/stores';
 	import { VEHICLES } from '@store/server';
-	import Header from '@components/Header.svelte';
-	import { SendNUI } from '@utils/SendNUI';
+import Header from '@components/Header.svelte';
+import { SendNUI } from '@utils/SendNUI';
 
 	let search = '';
 
@@ -27,13 +27,47 @@
 		});
 	}
 
-	const getVehicleImage = (model: any) =>
+	const getPrimaryImage = (model: string) =>
+		`https://cfx-nui-ox_inventory/web/images/${model}.png`;
+
+	const getFallbackImage = (model: string) =>
 		`https://docs.fivem.net/vehicles/${model}.webp`;
 
-	let imageError: Record<string, boolean> = {};
-	function handleImgError(hash: any) {
-		imageError = { ...imageError, [hash]: true };
+	// No NUI, aponte para a pasta de imagens dentro do recurso (html/vehicles)
+	const getNuiResourceImage = (model: string, upper = false) =>
+		`vehicles/${model}.${upper ? 'PNG' : 'png'}`;
+
+	const LOCAL_FS_PREFIX = '/@fs/C:/Users/bruno/Downloads/mri_assets-main/vehicles';
+	const getLocalImage = (model: string, ext: 'png' | 'PNG' = 'png') =>
+		`${LOCAL_FS_PREFIX}/${model}.${ext}`;
+
+	let imageStatus: Record<string, 'nui-PNG' | 'primary' | 'local-PNG' | 'fallback' | 'failed'> = {};
+
+	function onImageError(hash: any) {
+		const key = String(hash);
+		const status = imageStatus[key];
+		if (isNUI) {
+			// NUI: vehicles (png) -> vehicles (PNG) -> ox_inventory -> docs -> placeholder
+			imageStatus = {
+				...imageStatus,
+				[key]: status === 'primary'
+					? 'fallback'
+					: status === 'nui-PNG'
+					? 'primary'
+					: status === 'fallback'
+					? 'failed'
+					: 'nui-PNG',
+			};
+		} else {
+			// Dev: local (png) -> local (PNG) -> docs -> placeholder
+			imageStatus = {
+				...imageStatus,
+				[key]: status === 'local-PNG' ? 'fallback' : status === 'fallback' ? 'failed' : 'local-PNG',
+			};
+		}
 	}
+
+	const isNUI = typeof (window as any).GetParentResourceName === 'function';
 </script>
 
 
@@ -58,20 +92,37 @@
 					</small>
 					{#each FilteredVehicles as vehicle (vehicle.hash)}
 						<div class="relative flex items-center gap-6 bg-secondary p-6 rounded-lg shadow-md">
-							{#if !imageError[String(vehicle.hash)]}
-								<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
-									<img
-										src={getVehicleImage(vehicle.model)}
-										alt={vehicle.name || 'Desconhecido'}
-										class="object-contain w-full h-full"
-										on:error={() => handleImgError(vehicle.hash)}
-									/>
-								</div>
-							{:else}
-								<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
-									<i class="fa-solid fa-car text-5xl text-gray-500"></i>
-								</div>
-							{/if}
+						{#if imageStatus[String(vehicle.hash)] !== 'failed'}
+							<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
+								<img
+									src={(() => {
+										const key = String(vehicle.hash);
+										const status = imageStatus[key];
+										if (isNUI) {
+											// NUI: primeiro vehicles dentro do recurso, depois ox_inventory e docs
+											if (status === 'fallback') return getFallbackImage(vehicle.model);
+											if (status === 'primary') return getPrimaryImage(vehicle.model);
+											if (status === 'nui-PNG') return getNuiResourceImage(vehicle.model, true);
+											return getNuiResourceImage(vehicle.model, false);
+										} else {
+											// Dev: primeiro pasta local, depois docs
+											if (status === 'fallback') return getFallbackImage(vehicle.model);
+											if (status === 'local-PNG') return getLocalImage(vehicle.model, 'PNG');
+											return getLocalImage(vehicle.model, 'png');
+										}
+									})()}
+									alt={vehicle.name || 'Desconhecido'}
+									class="vehicle-image w-full h-full"
+									loading="lazy"
+									decoding="async"
+									on:error={() => onImageError(vehicle.hash)}
+								/>
+							</div>
+						{:else}
+							<div class="flex items-center justify-center w-[128px] h-[80px] bg-zinc-800 rounded-lg">
+								<i class="fa-solid fa-car text-5xl text-gray-500"></i>
+							</div>
+						{/if}
 							<div class="flex flex-col flex-grow">
 								<span class="text-white font-bold text-xl truncate">
 									{vehicle.name || 'Desconhecido'}

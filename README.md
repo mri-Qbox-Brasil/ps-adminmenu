@@ -138,3 +138,40 @@ add_principal identifier.fivem:565139 qbcore.mod # MonkeyWhisper
 * [Lenzh](https://github.com/Lenzh)
 * [LeSiiN](https://github.com/LeSiiN)
 * Project Sloth Team
+
+
+/////////////////////////////////
+como adicionar imagens de veículos addon no seu ps-admin no seu servidor:
+
+🚗 Como adicionar imagens de veículos addon no servidor (passo a passo para iniciantes)
+🛠️ Requisitos básicos
+Antes de começar, certifique-se de que:
+- Os veículos estão registrados corretamente na base de dados do servidor.
+- Você tem acesso às pastas do servidor onde serão colocadas as imagens.
+
+📁 Caminho 1: Usando o ox_inventory
+- Acesse a pasta:
+Vá até ox_inventory\web\images.
+- Adicione a imagem do veículo:
+Coloque a imagem do carro aqui.
+Exemplo: Se o veículo se chama supra, salve a imagem como supra.png.
+- Importante:
+O nome da imagem deve ser igual ao nome do veículo registrado na base.
+Se o veículo se chama supra, a imagem precisa ser supra.png.
+
+📁 Caminho 2: Usando o ps-adminmenu
+- Acesse a pasta:
+Vá até ps-adminmenu-main\html\vehicles.
+- Verifique se a pasta existe:
+Se não existir a pasta vehicles, crie uma nova com esse nome.
+- Adicione a imagem do veículo:
+Coloque a imagem do carro aqui.
+Exemplo: Se o veículo se chama veiculo, salve a imagem como veiculo.png.
+- Mesmo princípio:
+O nome da imagem deve bater com o nome do veículo na base.
+
+✅ Dicas finais
+- Use imagens em formato PNG.
+- Mantenha os nomes sem espaços e sem letras maiúsculas, se possível.
+- Verifique se o nome do veículo está corretamente registrado no banco de dados.  
+- 
